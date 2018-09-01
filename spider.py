@@ -1,25 +1,28 @@
 # coding:utf-8
 import os
 from whoosh.index import create_in
+from whoosh.index import open_dir
 from whoosh.fields import *
 from jieba.analyse import ChineseAnalyzer
 import requests
 from lxml import etree
 analyzer = ChineseAnalyzer()
 
-schema = Schema(title=TEXT(stored=True,analyzer=analyzer), path=ID(stored=True), content=TEXT(stored=True, analyzer=analyzer))
+schema = Schema(city=TEXT(stored=True), title=TEXT(stored=True,analyzer=analyzer), path=ID(stored=True), content=TEXT(stored=True, analyzer=analyzer))
 
 indexdir = 'indexdir/'
 if not os.path.exists(indexdir):
     os.mkdir(indexdir)
-ix = create_in(indexdir, schema)
+    ix = create_in(indexdir, schema)
+else:
+    ix = open_dir("indexdir")
 
 # from elasticsearch import Elasticsearch
 
 # es = Elasticsearch(hosts=["localhost:9200"], timeout=5000)
 
 urls = {
-    "https://www.douban.com/group/581823/discussion?start=0"
+    "上海":"https://www.douban.com/group/581823/discussion?start=0"
 }
 
 class Spider:
@@ -31,7 +34,7 @@ class Spider:
         self.urls = urls
         
     def run(self):
-        for url in self.urls:
+        for city, url in self.urls.items():
             
             response = self.session.get(url, headers=self.headers)
             doc = etree.HTML(response.content)
@@ -43,7 +46,7 @@ class Spider:
                 print(href)
                 content = self.gettopic(href)
                 writer = ix.writer()
-                writer.add_document(title=title, content=content,
+                writer.add_document(city=city, title=title, content=content,
                     path=href)
                 writer.commit()
                 # id = href.split("/")[-2]
