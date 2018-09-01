@@ -14,6 +14,9 @@ if not os.path.exists(indexdir):
     os.mkdir(indexdir)
 ix = create_in(indexdir, schema)
 
+# from elasticsearch import Elasticsearch
+
+# es = Elasticsearch(hosts=["localhost:9200"], timeout=5000)
 
 urls = {
     "https://www.douban.com/group/581823/discussion?start=0"
@@ -29,6 +32,7 @@ class Spider:
         
     def run(self):
         for url in self.urls:
+            
             response = self.session.get(url, headers=self.headers)
             doc = etree.HTML(response.content)
             title_eles = doc.xpath('//td[@class="title"]')
@@ -42,6 +46,16 @@ class Spider:
                 writer.add_document(title=title, content=content,
                     path=href)
                 writer.commit()
+                # id = href.split("/")[-2]
+                # data = {
+                #     'id':id,
+                #     'title':title,
+                #     'href':href,
+                #     'content':content
+                # }
+                # es.index(index="my-index", doc_type="test-type", id=id, body=data)
+
+
 
     def gettopic(self, url):
         response = self.session.get(url, headers = self.headers)
